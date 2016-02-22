@@ -4,6 +4,9 @@ from os.path import join, dirname, abspath
 import time
 import os
 
+from datetime import datetime
+
+
 from riak import RiakClient, RiakNode
 from riak.riak_object import RiakObject
 
@@ -14,6 +17,7 @@ HIGHWAYS = 'highways.csv'
 STATIONS = 'freeway_stations.csv'
 DETECTORS = 'freeway_detectors.csv'
 LOOPDATA = 'freeway_loopdata_OneHour.csv'
+FOSTER_NB_STATIONID = '1047'
 
 
 class Bucket(object):
@@ -67,6 +71,11 @@ def insert_detector(bucket, row):
 
 def insert_loopdata(bucket, row):
     key = "{0}-{1}".format(row["detectorid"], row["starttime"])
+    d, t = row['starttime'].split(' ')
+    if len(t) == 7:
+        t = '0' + t
+    timestamp = datetime.strptime(d + ' ' + t, '%m/%d/%Y %H:%M:%S')
+    row['starttime'] = timestamp.strftime('%Y-%m-%dT%H:%M:%SZ')
     bucket.put(key, row)
 
 
@@ -83,41 +92,72 @@ def build(client):
     
     highways_bucket = Bucket(client, 'highways')
     highways_bucket.set_index(join(solr, 'highways.xml'))
-    loader(join(data, HIGHWAYS), insert_highway, highways_bucket)
     
     stations_bucket = Bucket(client, 'stations')
     stations_bucket.set_index(join(solr, 'stations.xml'))
-    loader(join(data, STATIONS), insert_station, stations_bucket)
     
     detectors_bucket = Bucket(client, 'detectors')
     detectors_bucket.set_index(join(solr, 'detectors.xml'))
-    loader(join(data, DETECTORS), insert_detector, detectors_bucket)
-
+    
     loopdata_bucket = Bucket(client, 'loopdata')
     loopdata_bucket.set_index(join(solr, 'loopdata.xml'))
+
+    time.sleep(60)
+    
+    loader(join(data, HIGHWAYS), insert_highway, highways_bucket)
+    loader(join(data, STATIONS), insert_station, stations_bucket)
+    loader(join(data, DETECTORS), insert_detector, detectors_bucket)
     loader(join(data, LOOPDATA), insert_loopdata, loopdata_bucket)
 
 
-def test(client):
-    highways_bucket = Bucket(client, 'highways')
-    stations_bucket = Bucket(client, 'stations')
-    detectors_bucket = Bucket(client, 'detectors')
+def test_indexes(client):
+    print Bucket(client, 'highways').search('highwayid:3')
+    print Bucket(client, 'detectors').search('detectorid:1345')
+    print Bucket(client, 'stations').search('stationid:1045')
+    print Bucket(client, 'loopdata').search('detectorid:1345')
+
+
+def query1(client):
     loopdata_bucket = Bucket(client, 'loopdata')
+    results = loopdata_bucket.search('speed:[100 TO *]')
+    return results['num_found']
 
-    # send some test queries
-    print highways_bucket.get('3').data, '\n'
-    print highways_bucket.search('highwayid:3'), '\n'
-    print stations_bucket.get('1045').data, '\n'
-    print stations_bucket.search('stationid:1045'), '\n'
-    print detectors_bucket.get('1345').data, '\n'
-    print detectors_bucket.search('detectorid:1345'), '\n'
-    print loopdata_bucket.search('detectorid:1345'), '\n'
 
+def query2(client):
+    """ find detector ids for Foster NB Station
+    """
+    detectors_bucket = Bucket(client, 'detectors')
+    results = detectors_bucket.search('stationid:{0}'.format(FOSTER_NB_STATIONID))
+    detectorids = " OR ".join(
+        [ "detectorid:" + str(row['detectorid']) for row in results['docs'] ]
+    )
+    
+    """ using the found detector ids construct a query to retrieve the records
+        on the given date
+    """
+    loopdata_bucket = Bucket(client, 'loopdata')
+    daterange = 'starttime:[2011-09-15T00:00:00Z TO 2011-09-15T23:59:59Z]' 
+    query = '{0} AND ({1})'.format(daterange, detectorids)
+    results = loopdata_bucket.search(query)
+    
+    """ from the results compute volume
+    """
+    volume = 0
+    for row in results['docs']:
+        volume += row['volume']
+    return volume
+
+
+def query(client):
+    print query1(client)
+    print query2(client)
+      
 
 def main():
     client = connect()
-    build(client)
-    test(client)
+    #build(client)
+    #test_indexes(client)
+    query(client)
 
 
 if __name__ == '__main__':
