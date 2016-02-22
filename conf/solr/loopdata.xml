@@ -4,12 +4,12 @@
    <!-- 'type' attribute must be be defined below in the 'types' child
          and referencing a solr class -->   
    <field name="detectorid"     type="int"      indexed="true"  stored="true" />
-   <field name="starttime"      type="string"   indexed="true"  stored="true" />
-   <field name="volume"         type="int"      indexed="false" stored="true" />
-   <field name="speed"          type="int"      indexed="false" stored="true" />
-   <field name="occupancy"      type="int"      indexed="false" stored="true" />
-   <field name="status"         type="int"      indexed="false" stored="true" />
-   <field name="dqflags"        type="int"      indexed="false" stored="true" />
+   <field name="starttime"      type="date"     indexed="true"  stored="true" />
+   <field name="volume"         type="int"      indexed="true"  stored="true" />
+   <field name="speed"          type="int"      indexed="true"  stored="true" />
+   <field name="occupancy"      type="int"      indexed="true"  stored="true" />
+   <field name="status"         type="int"      indexed="true"  stored="true" />
+   <field name="dqflags"        type="int"      indexed="true"  stored="true" />
 
    <!-- All of these fields are required by Riak Search -->
    <field name="_yz_id"   type="_yz_str" indexed="true" stored="true"  multiValued="false" required="true"/>
@@ -31,5 +31,6 @@
     <fieldType name="_yz_str" class="solr.StrField" sortMissingLast="true" />
     <fieldType name="int" class="solr.TrieIntField" sortMissingLast="true" />
     <fieldType name="string" class="solr.StrField" sortMissingLast="true" />
-  </types>
+    <fieldType name="date" class="solr.TrieDateField" sortMissingLast="true" />
+</types>
 </schema>

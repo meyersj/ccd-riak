@@ -6,10 +6,10 @@
    <field name="detectorid"     type="int"      indexed="true"  stored="true" />
    <field name="stationid"      type="int"      indexed="true"  stored="true" />
    <field name="highwayid"      type="int"      indexed="true"  stored="true" />
-   <field name="milepost"       type="float"    indexed="false" stored="true" />
-   <field name="locationtext"   type="string"   indexed="false" stored="true" />
-   <field name="detectorclass"  type="int"      indexed="false" stored="true" />
-   <field name="lanenumber"     type="int"      indexed="false" stored="true" />
+   <field name="milepost"       type="float"    indexed="true"  stored="true" />
+   <field name="locationtext"   type="string"   indexed="true"  stored="true" />
+   <field name="detectorclass"  type="int"      indexed="true"  stored="true" />
+   <field name="lanenumber"     type="int"      indexed="true"  stored="true" />
 
    <!-- All of these fields are required by Riak Search -->
    <field name="_yz_id"   type="_yz_str" indexed="true" stored="true"  multiValued="false" required="true"/>

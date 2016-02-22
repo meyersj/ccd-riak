@@ -4,9 +4,9 @@
    <!-- 'type' attribute must be be defined below in the 'types' child
          and referencing a solr class -->   
    <field name="highwayid"      type="int"      indexed="true"  stored="true" />
-   <field name="shortdirection" type="string"   indexed="false" stored="true" />
-   <field name="direction"      type="string"   indexed="false" stored="true" />
-   <field name="highwayname"    type="string"   indexed="false" stored="true" />
+   <field name="shortdirection" type="string"   indexed="true"  stored="true" />
+   <field name="direction"      type="string"   indexed="true"  stored="true" />
+   <field name="highwayname"    type="string"   indexed="true"  stored="true" />
 
    <!-- All of these fields are required by Riak Search -->
    <field name="_yz_id"   type="_yz_str" indexed="true" stored="true"  multiValued="false" required="true"/>

@@ -5,14 +5,14 @@
          and referencing a solr class -->   
    <field name="stationid"      type="int"      indexed="true"  stored="true" />
    <field name="highwayid"      type="int"      indexed="true"  stored="true" />
-   <field name="milepost"       type="float"    indexed="false" stored="true" />
-   <field name="locationtext"   type="string"   indexed="false" stored="true" />
-   <field name="upstream"       type="int"      indexed="false" stored="true" />
-   <field name="downstream"     type="int"      indexed="false" stored="true" />
-   <field name="stationclass"   type="int"      indexed="false" stored="true" />
-   <field name="numberlanes"    type="int"      indexed="false" stored="true" />
-   <field name="latlon"         type="string"   indexed="false" stored="true" />
-   <field name="length"         type="float"    indexed="false" stored="true" />
+   <field name="milepost"       type="float"    indexed="true" stored="true" />
+   <field name="locationtext"   type="string"   indexed="true" stored="true" />
+   <field name="upstream"       type="int"      indexed="true" stored="true" />
+   <field name="downstream"     type="int"      indexed="true" stored="true" />
+   <field name="stationclass"   type="int"      indexed="true" stored="true" />
+   <field name="numberlanes"    type="int"      indexed="true" stored="true" />
+   <field name="latlon"         type="string"   indexed="true" stored="true" />
+   <field name="length"         type="float"    indexed="true" stored="true" />
 
    <!-- All of these fields are required by Riak Search -->
    <field name="_yz_id"   type="_yz_str" indexed="true" stored="true"  multiValued="false" required="true"/>
