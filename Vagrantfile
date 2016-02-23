@@ -12,8 +12,22 @@ Vagrant.configure(2) do |config|
 
   # Every Vagrant development environment requires a box. You can search for
   # boxes at https://atlas.hashicorp.com/search.
-  config.vm.box = "ubuntu/trusty64"
-  
+  if ENV['DEPLOY_MODE'] == 'digitalocean'
+    config.vm.hostname = ENV['DO_SERVER_NAME']
+    config.vm.box = "digital_ocean"
+    config.ssh.private_key_path = ENV['DO_SSH_KEY']
+    config.vm.provider :digital_ocean do |provider|
+      provider.token = ENV['DO_API_TOKEN']
+      provider.image = 'ubuntu-14-04-x64'
+      provider.region = "SFO1"
+      provider.size = "2GB"
+      provider.name = "vagrant"
+    end
+  else
+    config.vm.box = "ubuntu/trusty64"
+  end    
+
+
   # Disable automatic box update checking. If you disable this, then
   # boxes will only be checked for updates when the user runs
   # `vagrant box outdated`. This is not recommended.
@@ -56,7 +70,7 @@ Vagrant.configure(2) do |config|
   
      # Customize the amount of memory on the VM:
      vb.memory = "2048"
-   end
+  end
   #
   # View the documentation for the provider you are using for more
   # information on available options.
@@ -73,7 +87,6 @@ Vagrant.configure(2) do |config|
   # documentation for more information about their specific syntax and use.
   config.vm.provision "shell", inline: <<-SHELL
     /vagrant/bin/install-riak.sh
-    python /vagrant/src/loader.py
   SHELL
 
 end
