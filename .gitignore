@@ -1,4 +1,4 @@
 .vagrant
-doconf.sh
 *.pyc
 *.*.swp
+env
