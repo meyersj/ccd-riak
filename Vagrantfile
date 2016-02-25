@@ -87,6 +87,7 @@ Vagrant.configure(2) do |config|
   # documentation for more information about their specific syntax and use.
   config.vm.provision "shell", inline: <<-SHELL
     /vagrant/bin/install-riak.sh
+    /vagrant/bin/load-conf.sh
   SHELL
 
 end

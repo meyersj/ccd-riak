@@ -9,7 +9,4 @@ apt-get update
 apt-get install -y \
     apt-transport-https default-jdk \
     riak python-dev python-pip libffi-dev libssl-dev 
-riak stop
-cp /vagrant/conf/riak.conf /etc/riak/riak.conf
-riak start
 pip install riak
