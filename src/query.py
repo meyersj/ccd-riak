@@ -9,7 +9,7 @@ def query1(client):
     return results['num_found']
 
 
-def query2(client):
+def query2(client, daterange):
     """ find detector ids for Foster NB Station
     """
     detectors_bucket = Bucket(client, 'detectors')
@@ -22,7 +22,7 @@ def query2(client):
         on the given date
     """
     loopdata_bucket = Bucket(client, 'loopdata')
-    daterange = 'starttime:[2011-09-15T00:00:00Z TO 2011-09-15T23:59:59Z]' 
+    daterange = 'starttime:[{0}]'.format(daterange)
     query = '{0} AND ({1})'.format(daterange, detectorids)
     results = loopdata_bucket.search(query)
     
@@ -95,11 +95,20 @@ def test_indexes(client):
     print Bucket(client, 'loopdata').search('detectorid:1345')
 
 
-def run(client):
-    #test_indexes(client)
+def all_queries(client):
     print 'Query 1: Records with Speed >= 100:', query1(client)
+    daterange = '2011-09-21T00:00:00Z TO 2011-09-21T23:59:59Z' 
     print 'Query 2: Volume at Foster NB on Sept 21 2011:', query2(client)
-    print 'Query 3: Peak Travel Times:', query3(client)
+    ampeak = '2011-09-22T07:00:00Z TO 2011-09-22T08:59:59Z' 
+    pmpeak = '2011-09-22T16:00:00Z TO 2011-09-22T17:59:59Z' 
+    print 'Query 3: Peak Travel Times:'
+    print '\tAM Peak:', query3(client, ampeak)
+    print '\tPM Peak:', query3(client, pmpeak)
     print 'Query 4: Route Finding:', query4(client)
     print 'Query 5: Update station 1140 lengh'
     query5(client)
+
+
+def run(client):
+    test_indexes(client)
+    all_queries(client)
