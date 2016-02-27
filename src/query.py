@@ -34,7 +34,7 @@ def query2(client, daterange):
     return volume
 
 
-def query3(client):
+def query3(client, daterange):
     """ get Foster NB length
     """
     stations_bucket = Bucket(client, 'stations')
@@ -54,7 +54,7 @@ def query3(client):
         for the given timerange
     """
     loopdata_bucket = Bucket(client, 'loopdata')
-    timerange = 'starttime:[2011-09-15T00:00:00Z TO 2011-09-15T00:59:59Z]' 
+    timerange = 'starttime:[{0}]'.format(daterange)
     query = '{0} AND ({1})'.format(timerange, detectorids)
     results = loopdata_bucket.search(query)
     
@@ -98,7 +98,7 @@ def test_indexes(client):
 def all_queries(client):
     print 'Query 1: Records with Speed >= 100:', query1(client)
     daterange = '2011-09-21T00:00:00Z TO 2011-09-21T23:59:59Z' 
-    print 'Query 2: Volume at Foster NB on Sept 21 2011:', query2(client)
+    print 'Query 2: Volume at Foster NB on Sept 21 2011:', query2(client, daterange)
     ampeak = '2011-09-22T07:00:00Z TO 2011-09-22T08:59:59Z' 
     pmpeak = '2011-09-22T16:00:00Z TO 2011-09-22T17:59:59Z' 
     print 'Query 3: Peak Travel Times:'
