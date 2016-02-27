@@ -1,4 +1,4 @@
-import csv 
+import csv
 from os.path import join, dirname, abspath
 import time
 import os
@@ -10,7 +10,7 @@ from utils import Bucket
 HIGHWAYS = 'highways.csv'
 STATIONS = 'freeway_stations.csv'
 DETECTORS = 'freeway_detectors.csv'
-LOOPDATA = 'freeway_loopdata_OneHour.csv'
+LOOPDATA = 'loopdata{0}.csv'.format(os.getenv('NODE_NUMBER', ''))
 
 
 def loader(filepath, insert, bucket):
@@ -36,12 +36,9 @@ def insert_detector(bucket, row):
 
 
 def insert_loopdata(bucket, row):
-    
     datepart, timepart = row['starttime'].split(' ')
-    if len(timepart) == 7:
-        # timepart is missing leading zero so add it
-        timepart = '0' + timepart
-    timestamp = datetime.strptime(datepart + ' ' + timepart, '%m/%d/%Y %H:%M:%S')
+    timepart = timepart.split('-')[0]
+    timestamp = datetime.strptime(datepart + ' ' + timepart, '%Y-%m-%d %H:%M:%S')
     epoch = int(time.mktime(timestamp.timetuple()))
     key = "{0}-{1}".format(row["detectorid"], epoch)
     row['starttime'] = timestamp.strftime('%Y-%m-%dT%H:%M:%SZ')
