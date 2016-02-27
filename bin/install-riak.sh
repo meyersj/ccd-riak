@@ -10,3 +10,5 @@ apt-get install -y \
     apt-transport-https default-jdk \
     riak python-dev python-pip libffi-dev libssl-dev 
 pip install riak
+
+echo FINISHED
