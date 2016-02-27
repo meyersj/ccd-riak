@@ -500,3 +500,6 @@ search.solr.jmx_port = 8985
 ##   - text
 search.solr.jvm_options = -d64 -Xms1g -Xmx1g -XX:+UseStringCache -XX:+UseCompressedOops
 
+# force port range for erlang instead of using random next available port
+erlang.distribution.port_range.minimum = 6000
+erlang.distribution.port_range.maximum = 7999
