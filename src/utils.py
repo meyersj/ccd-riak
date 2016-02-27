@@ -1,8 +1,24 @@
+import socket
+import fcntl
+import struct
+
 from riak import RiakClient
 from riak.riak_object import RiakObject
 
 
-RIAK_HOST = '127.0.0.1'
+def ip_address(ifname):
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    return socket.inet_ntoa(fcntl.ioctl(
+        s.fileno(),
+        0x8915,  # SIOCGIFADDR
+        struct.pack('256s', ifname[:15])
+    )[20:24])
+
+
+try:
+    RIAK_HOST = ip_address('eth0')
+except IOError:
+    RIAK_HOST = '127.0.0.1'
 RIAK_PORT = 8098
 
 
