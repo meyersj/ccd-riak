@@ -96,11 +96,11 @@ if [ "${CMD}" = "load" ]; then
     for i in 1 2 3
     do
         ip=${ALL_NODES[$(expr ${i} - 1)]}
-        echo $ip
-        file=${DATA}${i}.csv
-        ssh root@${ip} "cd /vagrant/data; wget ${file}"
-        load="nohup sh -c \"./bin/load-data.sh\" > build.out 2>&1 &"
-        ssh root@${ip} "cd /vagrant; export NODE_ID=${i}; ${load}"
+        echo "load NOT IMPLEMENTED" $ip
+        #file=${DATA}${i}.csv
+        #ssh root@${ip} "cd /vagrant/data; wget ${file}"
+        #load="nohup sh -c \"./bin/load-data.sh\" > build.out 2>&1 &"
+        #ssh root@${ip} "cd /vagrant; export NODE_ID=${i}; ${load}"
     done
 fi
 
