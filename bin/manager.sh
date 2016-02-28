@@ -9,11 +9,12 @@
 
 CMD=$1
 
+START=$PWD
 SCRIPT=$(readlink -f $0)
 SCRIPTPATH=`dirname $SCRIPT`
 ROOT=`readlink -f $SCRIPTPATH/../..`
-MAIN_NODE=45.55.9.182
-ALL_NODES=( ${MAIN_NODE} 198.199.104.71 45.55.10.13 )
+MAIN_NODE=159.203.243.11
+ALL_NODES=( ${MAIN_NODE} ${RMS_NODE} 159.203.243.9 159.203.243.15 )
 DATA=https://s3-us-west-2.amazonaws.com/jeffrey.alan.meyers.bucket/loopdata/loopdata
 
 
@@ -61,10 +62,22 @@ fi
 if [ "${CMD}" = "cluster" ]; then
     for i in "${ALL_NODES[@]}"
     do
+        echo "Clear Node" $i
+        user=root
+        if [ "${i}" == "${RMS_NODE}" ]; then
+            user=riak
+        fi
+        ssh ${user}@${i} "riak stop; rm -rf /var/lib/riak/*; riak start"
+    done
+    for i in "${ALL_NODES[@]}"
+    do
         echo Node $i
-        ssh root@${i} "riak start"
+        user=root
+        if [ "${i}" == "${RMS_NODE}" ]; then
+            user=riak
+        fi
         if [ "${i}" != "${MAIN_NODE}" ]; then
-            ssh root@${i} "riak-admin cluster join riak@${MAIN_NODE}"
+            ssh ${user}@${i} "riak-admin cluster join riak@${MAIN_NODE}"
         fi
     done
     ssh root@${MAIN_NODE} "riak-admin cluster plan"
@@ -90,3 +103,5 @@ if [ "${CMD}" = "load" ]; then
         ssh root@${ip} "cd /vagrant; export NODE_ID=${i}; ${load}"
     done
 fi
+
+cd $START
