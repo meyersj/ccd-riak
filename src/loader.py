@@ -10,7 +10,7 @@ from utils import Bucket
 HIGHWAYS = 'highways.csv'
 STATIONS = 'freeway_stations.csv'
 DETECTORS = 'freeway_detectors.csv'
-LOOPDATA = 'loopdata{0}.csv'.format(os.getenv('NODE_ID', ''))
+LOOPDATA = ''
 
 
 def loader(filepath, insert, bucket):
@@ -18,9 +18,37 @@ def loader(filepath, insert, bucket):
     loop over each row in the csv as a dictionary (json)
     and call insert function with
     """
+    line = 2 # first row are headers
+    lines = 0
+    start = time.time()
+
+    """ get total line count
+    """
     with open(filepath, 'rb') as f:
-        for row in csv.DictReader(f):
-            insert(bucket, row)
+        # after iterating all lines i will have count -1
+        for i, l in enumerate(f): pass
+        lines = i + 1
+    
+
+    """ if there is only one or no rows there is no work to do
+    """
+    if lines < line:
+        return False
+
+    """ continue processing even if errors are encountered
+    """
+    with open(filepath, 'rb') as f:
+        for i, row in enumerate(csv.DictReader(f)):
+            try:
+                insert(bucket, row)
+                if i + 1 % 10000 == 0:
+	            print datetime.now(), filepath, "line", line
+	    except Exception as e:
+	        print "error", os.path.basename(filepath), "line", line
+                print str(e)
+            line += 1
+    end = time.time()
+    print os.path.basename(filepath), "elapsed", (end - start) / 60.0, "minutes"
 
 
 def insert_highway(bucket, row):
@@ -71,4 +99,7 @@ def load(client):
     loader(join(data, HIGHWAYS), insert_highway, highways_bucket)
     loader(join(data, STATIONS), insert_station, stations_bucket)
     loader(join(data, DETECTORS), insert_detector, detectors_bucket)
-    loader(join(data, LOOPDATA), insert_loopdata, loopdata_bucket)
+    for batch in [1, 2, 3]:
+    	LOOPDATA = 'loopdata{0}'.format(batch)
+    	print LOOPDATA
+        loader(join(data, LOOPDATA), insert_loopdata, loopdata_bucket)
