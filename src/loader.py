@@ -100,6 +100,6 @@ def load(client):
     loader(join(data, STATIONS), insert_station, stations_bucket)
     loader(join(data, DETECTORS), insert_detector, detectors_bucket)
     for batch in [1, 2, 3]:
-    	LOOPDATA = 'loopdata{0}'.format(batch)
+    	LOOPDATA = 'loopdata{0}.csv'.format(batch)
     	print LOOPDATA
         loader(join(data, LOOPDATA), insert_loopdata, loopdata_bucket)

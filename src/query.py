@@ -57,13 +57,16 @@ def query3(client, daterange):
     timerange = 'starttime:[{0}]'.format(daterange)
     query = '{0} AND ({1})'.format(timerange, detectorids)
     results = loopdata_bucket.search(query)
-    
+    if len(results['docs']) == 0:
+        return None 
     """ from the results compute volume
     """
     speed = 0
     for row in results['docs']:
         speed += row['speed']
     avg_speed = float(speed) / len(results['docs'])
+    if avg_speed == 0:
+        return None
     peak_travel_time = (float(length) / avg_speed) * 3600
     return peak_travel_time
 
