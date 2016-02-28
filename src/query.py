@@ -95,6 +95,12 @@ def test_indexes(client):
     print Bucket(client, 'loopdata').search('detectorid:1345')
 
 
+def test_keys(client):
+    print Bucket(client, 'highways').get('3').data
+    print Bucket(client, 'detectors').get('1345').data
+    print Bucket(client, 'stations').get('1045').data
+
+
 def all_queries(client):
     print 'Query 1: Records with Speed >= 100:', query1(client)
     daterange = '2011-09-21T00:00:00Z TO 2011-09-21T23:59:59Z' 
@@ -111,4 +117,5 @@ def all_queries(client):
 
 def run(client):
     test_indexes(client)
+    test_keys(client)
     all_queries(client)
