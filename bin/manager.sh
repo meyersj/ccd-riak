@@ -9,6 +9,7 @@
 
 CMD=$1
 
+START=$PWD
 SCRIPT=$(readlink -f $0)
 SCRIPTPATH=`dirname $SCRIPT`
 ROOT=`readlink -f $SCRIPTPATH/../..`
@@ -90,3 +91,5 @@ if [ "${CMD}" = "load" ]; then
         ssh root@${ip} "cd /vagrant; export NODE_ID=${i}; ${load}"
     done
 fi
+
+cd $START
