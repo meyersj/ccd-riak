@@ -18,6 +18,9 @@ mv go /usr/local
 
 echo >> ~/.profile
 echo "export PATH=\$PATH:/usr/local/go/bin" >> ~/.profile
+echo "export GOPATH=\$HOME/go" >> ~/.profile
+
+mkdir -p $HOME/go
 source ~/.profile
 go get github.com/basho/riak-go-client
 
