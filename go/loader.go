@@ -16,23 +16,45 @@ import (
 
 var LOOPDATA_FILE string = "loopdata1000.csv"
 var LOOPDATA_BUCKET string = "loopdata"
+var MAX_CONNECTIONS int = 20
+var count int = 1
 
 func ReadData(file string, cluster *riak.Cluster) {
+
 	f, err := os.Open(file)
 	if err != nil {
 		log.Fatal(err)
 	}
 	r := csv.NewReader(bufio.NewReader(f))
 	header, err := r.Read()
+	if len(header) == 0 {
+
+	}
 	if err == io.EOF {
 		log.Fatal("Empty file", file)
 	}
+
+	sem := make(chan bool, MAX_CONNECTIONS)
 	for {
 		record, err := r.Read()
 		if err == io.EOF {
 			break
 		}
-		Store(cluster, header, record)
+		// attempt to acquire semaphore
+		// block if MAX_CONNECTIONS goroutines are already running
+		sem <- true
+		//log.Println("Start", count)
+		go func(c int) {
+			Store(cluster, header, record)
+			log.Println(c)
+			// allow next goroutine to run
+			<-sem
+		}(count)
+		count++
+	}
+	// clear out channel before exiting
+	for i := 0; i < MAX_CONNECTIONS; i++ {
+		sem <- true
 	}
 }
 
@@ -65,7 +87,7 @@ func StartCluster(address string) *riak.Cluster {
 
 func StopCluster(cluster *riak.Cluster) {
 	if err := cluster.Stop(); err != nil {
-		log.Fatal(err.Error())
+		log.Println(err.Error())
 	}
 }
 
@@ -86,6 +108,9 @@ func buildData(header []string, data []string) map[string]string {
 	fields := make(map[string]string)
 	for i := range data {
 		fields[header[i]] = data[i]
+		if data[i] == "" {
+			fields[header[i]] = "0"
+		}
 		if header[i] == "starttime" {
 			// 2011-09-15 00:00:00-07
 			starttime := parseTime(data[i])
@@ -134,20 +159,25 @@ func Store(cluster *riak.Cluster, header []string, data []string) {
 		WithContent(obj).
 		WithKey(key).
 		Build()
+
 	if err != nil {
 		log.Fatal(err.Error())
 	}
+
+	//async := &riak.Async{Command: cmd, Wait: wg}
+	//if err := cluster.ExecuteAsync(async); err != nil {
+	//	log.Fatal(err.Error())
+	//}
+
 	if err := cluster.Execute(cmd); err != nil {
 		log.Fatal(err.Error())
 	}
 
-	// run command
-	_ = cmd.(*riak.StoreValueCommand)
-	fmt.Println(key, cmd.Success())
+	// log.Println(key, fields["starttime"])
 }
 
 func RiakTest() {
-	address := "159.203.243.11:8087"
+	address := "bobthemundane.ddns.net:8087"
 	cluster := StartCluster(address)
 	defer StopCluster(cluster)
 	ReadData("../data/"+LOOPDATA_FILE, cluster)
