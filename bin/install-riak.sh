@@ -7,6 +7,7 @@ curl https://packagecloud.io/gpg.key | apt-key add -
 cp /vagrant/conf/basho.list /etc/apt/sources.list.d
 apt-get update
 apt-get install -y \
+    git \
     apt-transport-https default-jdk \
     riak python-dev python-pip libffi-dev libssl-dev 
 pip install riak
