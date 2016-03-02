@@ -41,7 +41,7 @@ def loader(filepath, insert, bucket):
         for i, row in enumerate(csv.DictReader(f)):
             try:
                 insert(bucket, row)
-                if i + 1 % 10000 == 0:
+                if i % 5000 == 0:
 	            print datetime.now(), filepath, "line", line
 	    except Exception as e:
 	        print "error", os.path.basename(filepath), "line", line
@@ -67,11 +67,43 @@ def insert_loopdata(bucket, row):
     datepart, timepart = row['starttime'].split(' ')
     timepart = timepart.split('-')[0]
     timestamp = datetime.strptime(datepart + ' ' + timepart, '%Y-%m-%d %H:%M:%S')
-    epoch = int(time.mktime(timestamp.timetuple()))
-    key = "{0}-{1}".format(row["detectorid"], epoch)
+    key = "{0}-{1}".format(row["detectorid"], row["starttime"])
     row['starttime'] = timestamp.strftime('%Y-%m-%dT%H:%M:%SZ')
+    # if empty string change to zero
+    # solr will not index if integer field is empty string
+    for field in row:
+        if row[field] == "":
+            row[field] = 0
     bucket.put(key, row)
-  
+
+
+def delete_loopdata(bucket, row):
+    key = "{0}-{1}".format(row["detectorid"], row["starttime"])
+    bucket.delete(key)
+   
+
+def load_schema(client, solr):
+    Bucket(client, 'highways').set_index(join(solr, 'highways.xml'))
+    Bucket(client, 'stations').set_index(join(solr, 'stations.xml'))
+    Bucket(client, 'detectors').set_index(join(solr, 'detectors.xml'))
+    Bucket(client, 'loopdata').set_index(join(solr, 'loopdata.xml'))
+
+
+def load_data(client, data):
+    loader(join(data, HIGHWAYS), insert_highway, Bucket(client, 'highways'))
+    loader(join(data, STATIONS), insert_station, Bucket(client, 'stations'))
+    loader(join(data, DETECTORS), insert_detector, Bucket(client, 'detectors'))
+
+
+def load_loopdata(client):
+    data = join(dirname(dirname(abspath(__file__))), "data")
+    loader(join(data, LOOPDATA), insert_loopdata, Bucket(client, 'loopdata')) 
+
+
+def clear(client):
+    data = join(dirname(dirname(abspath(__file__))), "data")
+    loader(join(data, LOOPDATA), delete_loopdata, Bucket(client, 'loopdata')) 
+
 
 def load(client):
     """
@@ -84,19 +116,6 @@ def load(client):
     data = join(parent, "data")
     solr = join(parent, "conf/solr")
     
-    highways_bucket = Bucket(client, 'highways')
-    stations_bucket = Bucket(client, 'stations')
-    detectors_bucket = Bucket(client, 'detectors')
-    loopdata_bucket = Bucket(client, 'loopdata')
-    
-    highways_bucket.set_index(join(solr, 'highways.xml'))
-    stations_bucket.set_index(join(solr, 'stations.xml'))
-    detectors_bucket.set_index(join(solr, 'detectors.xml'))
-    loopdata_bucket.set_index(join(solr, 'loopdata.xml'))
-    
+    load_schema(client, solr)    
     time.sleep(60)
-    
-    loader(join(data, HIGHWAYS), insert_highway, highways_bucket)
-    loader(join(data, STATIONS), insert_station, stations_bucket)
-    loader(join(data, DETECTORS), insert_detector, detectors_bucket)
-    # loader(join(data, LOOPDATA), insert_loopdata, loopdata_bucket)
+    load_data(client, data)

@@ -45,7 +45,10 @@ class Bucket(object):
         obj = RiakObject(self.client, self.bucket, key=key)
         obj.data = data
         obj.store()
-        
+
+    def delete(self, key):
+        self.bucket.delete(key)
+
     def get(self, key):
         return self.bucket.get(key)
 
