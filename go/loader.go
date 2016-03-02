@@ -43,7 +43,9 @@ func ReadData(file string, cluster *riak.Cluster) {
 		// attempt to acquire semaphore
 		// block if MAX_CONNECTIONS goroutines are already running
 		sem <- true
-		//log.Println("Start", count)
+		if count%10000 == 0 {
+			log.Println(count)
+		}
 		go func(c int) {
 			Store(cluster, header, record)
 			log.Println(c)
@@ -130,12 +132,17 @@ func Store(cluster *riak.Cluster, header []string, data []string) {
 		log.Println("failed to parse starttime")
 		return
 	}
-	// parse timestamp to convert to epoch for key
+
+	// build key
+	key := fields["detectorid"] + "-" + fields["starttime"]
+
+	// parse starttime to timestamp required by Solr
 	starttime, err := time.Parse("2006-01-02T15:04:05Z07:00", fields["starttime"])
 	if err != nil {
 		log.Println(err)
 		return
 	}
+	fields["starttime"] = starttime
 
 	// build json from fields
 	content, jsonerr := json.Marshal(fields)
@@ -144,8 +151,6 @@ func Store(cluster *riak.Cluster, header []string, data []string) {
 		return
 	}
 
-	// key and oject
-	key := fields["detectorid"] + "-" + strconv.FormatInt(starttime.Unix(), 10)
 	obj := &riak.Object{
 		ContentType:     "application/json",
 		Charset:         "utf-8",
@@ -159,21 +164,14 @@ func Store(cluster *riak.Cluster, header []string, data []string) {
 		WithContent(obj).
 		WithKey(key).
 		Build()
-
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 
-	//async := &riak.Async{Command: cmd, Wait: wg}
-	//if err := cluster.ExecuteAsync(async); err != nil {
-	//	log.Fatal(err.Error())
-	//}
-
+	// store object
 	if err := cluster.Execute(cmd); err != nil {
 		log.Fatal(err.Error())
 	}
-
-	// log.Println(key, fields["starttime"])
 }
 
 func RiakTest() {
