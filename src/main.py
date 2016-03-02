@@ -12,7 +12,7 @@ def main():
 
     client = connect()
     if sys.argv[1] == 'load':
-        if len(sys.argv[2]) == 3 and sys.argv[2] == "loopdata":
+        if len(sys.argv) == 3 and sys.argv[2] == "loopdata":
             loader.load_loopdata(client)
         else:
             loader.load(client)
