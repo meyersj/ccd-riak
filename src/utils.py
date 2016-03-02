@@ -19,11 +19,13 @@ try:
     RIAK_HOST = ip_address('eth0')
 except IOError:
     RIAK_HOST = '127.0.0.1'
-RIAK_PORT = 8098
+RIAK_HTTP_PORT = 8098
+RIAK_PBC_PORT = 8087
 
 
 def connect(host=RIAK_HOST, port=RIAK_PORT):
-    client = RiakClient(protocol='http', host=host, http_port=port)
+    nodes = [dict(host=RIAK_HOST, http_port=RIAK_HTTP_PORT, pb_port=RIAK_PBC_PORT)]
+    client = RiakClient(nodes=nodes)
     assert client.ping(), "Failed to connect to client"
     return client
 
