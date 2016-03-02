@@ -9,9 +9,7 @@ import (
 	"io"
 	"log"
 	"os"
-	"strconv"
 	"strings"
-	"time"
 )
 
 var LOOPDATA_FILE string = "loopdata1000.csv"
@@ -37,6 +35,7 @@ func ReadData(file string, cluster *riak.Cluster) {
 	sem := make(chan bool, MAX_CONNECTIONS)
 	for {
 		record, err := r.Read()
+		log.Println(record)
 		if err == io.EOF {
 			break
 		}
@@ -47,8 +46,7 @@ func ReadData(file string, cluster *riak.Cluster) {
 			log.Println(count)
 		}
 		go func(c int) {
-			Store(cluster, header, record)
-			log.Println(c)
+			//Store(cluster, header, record)
 			// allow next goroutine to run
 			<-sem
 		}(count)
@@ -109,17 +107,10 @@ func parseTime(starttime string) string {
 func buildData(header []string, data []string) map[string]string {
 	fields := make(map[string]string)
 	for i := range data {
-		fields[header[i]] = data[i]
 		if data[i] == "" {
 			fields[header[i]] = "0"
-		}
-		if header[i] == "starttime" {
-			// 2011-09-15 00:00:00-07
-			starttime := parseTime(data[i])
-			if starttime == "" {
-				return nil
-			}
-			fields[header[i]] = starttime
+		} else {
+			fields[header[i]] = data[i]
 		}
 	}
 	return fields
@@ -136,13 +127,8 @@ func Store(cluster *riak.Cluster, header []string, data []string) {
 	// build key
 	key := fields["detectorid"] + "-" + fields["starttime"]
 
-	// parse starttime to timestamp required by Solr
-	starttime, err := time.Parse("2006-01-02T15:04:05Z07:00", fields["starttime"])
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	fields["starttime"] = starttime
+	// parse starttime to timestamp format required by Solr
+	fields["starttime"] = parseTime(fields["starttime"])
 
 	// build json from fields
 	content, jsonerr := json.Marshal(fields)

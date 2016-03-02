@@ -10,7 +10,7 @@ from utils import Bucket
 HIGHWAYS = 'highways.csv'
 STATIONS = 'freeway_stations.csv'
 DETECTORS = 'freeway_detectors.csv'
-LOOPDATA = ''
+LOOPDATA = 'loopdata1000.csv'
 
 
 def loader(filepath, insert, bucket):
@@ -66,9 +66,8 @@ def insert_detector(bucket, row):
 def insert_loopdata(bucket, row):
     datepart, timepart = row['starttime'].split(' ')
     timepart = timepart.split('-')[0]
-    timestamp = datetime.strptime(datepart + ' ' + timepart, '%Y-%m-%d %H:%M:%S')
     key = "{0}-{1}".format(row["detectorid"], row["starttime"])
-    row['starttime'] = timestamp.strftime('%Y-%m-%dT%H:%M:%SZ')
+    row['starttime'] = datepart + "T" + timepart + "Z"
     # if empty string change to zero
     # solr will not index if integer field is empty string
     for field in row:
