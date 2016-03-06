@@ -20,7 +20,7 @@ Vagrant.configure(2) do |config|
       provider.token = ENV['DO_API_TOKEN']
       provider.image = 'ubuntu-14-04-x64'
       provider.region = "SFO1"
-      provider.size = "4GB"
+      provider.size = "2GB"
       provider.name = "vagrant"
     end
   else
