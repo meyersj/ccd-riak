@@ -333,7 +333,7 @@ anti_entropy = active
 ## 
 ## Acceptable values:
 ##   - one of: bitcask, leveldb, memory, multi, prefix_multi
-storage_backend = bitcask
+storage_backend = leveldb
 
 ## Simplify prefix_multi configuration for Riak CS. Keep this
 ## commented out unless Riak is configured for Riak CS.
