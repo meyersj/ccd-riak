@@ -2,6 +2,7 @@
 
 
 riakdata=/var/lib/riak
+riaklogs=/var/log/riak
 sudo riak stop
 sudo rm -rf ${riakdata}/*
-sudo riak start
+sudo rm -rf ${riaklogs}/*
