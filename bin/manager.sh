@@ -13,8 +13,10 @@ START=$PWD
 SCRIPT=$(readlink -f $0)
 SCRIPTPATH=`dirname $SCRIPT`
 ROOT=`readlink -f $SCRIPTPATH/../..`
-MAIN_NODE=159.203.243.11
-ALL_NODES=( ${MAIN_NODE} ${RMS_NODE} 159.203.243.9 159.203.243.15 )
+MAIN_NODE=104.236.129.96
+#ALL_NODES=( ${MAIN_NODE} ${RMS_NODE} 162.243.139.86 107.170.219.89 )
+ALL_NODES=( ${MAIN_NODE} 162.243.139.86 107.170.219.89 )
+
 DATA=https://s3-us-west-2.amazonaws.com/jeffrey.alan.meyers.bucket/loopdata/loopdata
 
 
@@ -67,7 +69,7 @@ if [ "${CMD}" = "cluster" ]; then
         if [ "${i}" == "${RMS_NODE}" ]; then
             user=riak
         fi
-        ssh ${user}@${i} "riak stop; rm -rf /var/lib/riak/*; riak start"
+        ssh ${user}@${i} "riak stop; rm -rf /var/lib/riak/* /var/log/riak/*"
     done
     for i in "${ALL_NODES[@]}"
     do
@@ -76,6 +78,7 @@ if [ "${CMD}" = "cluster" ]; then
         if [ "${i}" == "${RMS_NODE}" ]; then
             user=riak
         fi
+        ssh ${user}@${i} "riak start"
         if [ "${i}" != "${MAIN_NODE}" ]; then
             ssh ${user}@${i} "riak-admin cluster join riak@${MAIN_NODE}"
         fi
@@ -92,16 +95,20 @@ if [ "${CMD}" = "cluster" ]; then
 fi
 
 
-if [ "${CMD}" = "load" ]; then
+if [ "${CMD}" = "data" ]; then
+    outfile=loopdata_all.csv
     for i in 1 2 3
     do
-        ip=${ALL_NODES[$(expr ${i} - 1)]}
-        echo "load NOT IMPLEMENTED" $ip
-        #file=${DATA}${i}.csv
-        #ssh root@${ip} "cd /vagrant/data; wget ${file}"
-        #load="nohup sh -c \"./bin/load-data.sh\" > build.out 2>&1 &"
-        #ssh root@${ip} "cd /vagrant; export NODE_ID=${i}; ${load}"
+        file=${DATA}${i}.csv
+        ssh root@${MAIN_NODE} "cd /vagrant/data; wget ${file}"
     done
+    ssh root@${MAIN_NODE} << \
+EOF
+        cd /vagrant/data
+        cat loopdata1.csv > ${outfile}
+        tail -n +2 loopdata2.csv >> ${outfile}
+        tail -n +2 loopdata3.csv >> ${outfile}
+EOF
 fi
 
 cd $START
