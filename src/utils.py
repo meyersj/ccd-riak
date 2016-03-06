@@ -23,7 +23,10 @@ RIAK_HTTP_PORT = 8098
 RIAK_PBC_PORT = 8087
 
 
-def connect(host=RIAK_HOST, port=RIAK_PORT):
+def connect():
+    #nodes = []
+    #for ip in ["45.55.0.44", "107.170.224.168", "45.55.1.236"]:
+    #    nodes.append(dict(host=ip, http_port=RIAK_HTTP_PORT, pb_port=RIAK_PBC_PORT))
     nodes = [dict(host=RIAK_HOST, http_port=RIAK_HTTP_PORT, pb_port=RIAK_PBC_PORT)]
     client = RiakClient(nodes=nodes)
     assert client.ping(), "Failed to connect to client"

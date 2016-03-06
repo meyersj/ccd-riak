@@ -10,7 +10,7 @@ from utils import Bucket
 HIGHWAYS = 'highways.csv'
 STATIONS = 'freeway_stations.csv'
 DETECTORS = 'freeway_detectors.csv'
-LOOPDATA = 'loopdata1000.csv'
+LOOPDATA = 'loopdata10000.csv'
 
 
 def loader(filepath, insert, bucket):

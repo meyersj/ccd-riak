@@ -4,18 +4,19 @@ import (
 	"bufio"
 	"encoding/csv"
 	"encoding/json"
-	//"fmt"
 	riak "github.com/basho/riak-go-client"
 	"io"
 	"log"
 	"os"
 	"strings"
+	"time"
 )
 
-var LOOPDATA_FILE string = "loopdata1000.csv"
+var LOOPDATA_FILE string = "loopdata_all.csv"
 var LOOPDATA_BUCKET string = "loopdata"
-var MAX_CONNECTIONS int = 20
-var count int = 1
+var MAX_CONNECTIONS int = 3
+var SLEEP_TIMEOUT time.Duration = 120 * time.Second
+var count int = 0
 
 func ReadData(file string, cluster *riak.Cluster) {
 
@@ -35,7 +36,6 @@ func ReadData(file string, cluster *riak.Cluster) {
 	sem := make(chan bool, MAX_CONNECTIONS)
 	for {
 		record, err := r.Read()
-		log.Println(record)
 		if err == io.EOF {
 			break
 		}
@@ -46,7 +46,15 @@ func ReadData(file string, cluster *riak.Cluster) {
 			log.Println(count)
 		}
 		go func(c int) {
-			//Store(cluster, header, record)
+			result := Store(cluster, header, record)
+			if !result {
+				log.Println("ERROR", "sleeping", c + 2)
+				time.Sleep(SLEEP_TIMEOUT)
+				result = Store(cluster, header, record)
+				if !result {
+					log.Fatal("FATAL", "retry after timeout failed")
+				}
+			}
 			// allow next goroutine to run
 			<-sem
 		}(count)
@@ -56,20 +64,25 @@ func ReadData(file string, cluster *riak.Cluster) {
 	for i := 0; i < MAX_CONNECTIONS; i++ {
 		sem <- true
 	}
+	log.Println("FINISHED LOADING")
 }
 
-func StartCluster(address string) *riak.Cluster {
-	nodeOpts := &riak.NodeOptions{
-		RemoteAddress: address,
-	}
-
-	var node *riak.Node
+func StartCluster(hosts []string) *riak.Cluster {
 	var err error
-	if node, err = riak.NewNode(nodeOpts); err != nil {
-		log.Fatal(err.Error())
-	}
+        
+	nodes := []*riak.Node{}
+        var node *riak.Node
+        for i := 0; i < len(hosts); i++ {
+        	nodeOpts := &riak.NodeOptions{
+			RemoteAddress: hosts[i],
+		}
 
-	nodes := []*riak.Node{node}
+		if node, err = riak.NewNode(nodeOpts); err != nil {
+			log.Fatal(err.Error())
+		}
+		nodes = append(nodes, node)
+	}
+        
 	opts := &riak.ClusterOptions{
 		Nodes: nodes,
 	}
@@ -116,12 +129,12 @@ func buildData(header []string, data []string) map[string]string {
 	return fields
 }
 
-func Store(cluster *riak.Cluster, header []string, data []string) {
+func Store(cluster *riak.Cluster, header []string, data []string) bool {
 	// convert headers and data into map
 	fields := buildData(header, data)
 	if fields == nil {
 		log.Println("failed to parse starttime")
-		return
+		return false
 	}
 
 	// build key
@@ -134,7 +147,7 @@ func Store(cluster *riak.Cluster, header []string, data []string) {
 	content, jsonerr := json.Marshal(fields)
 	if jsonerr != nil {
 		log.Println(jsonerr)
-		return
+		return false
 	}
 
 	obj := &riak.Object{
@@ -156,13 +169,16 @@ func Store(cluster *riak.Cluster, header []string, data []string) {
 
 	// store object
 	if err := cluster.Execute(cmd); err != nil {
-		log.Fatal(err.Error())
+		log.Println(err.Error())
+		return false
 	}
+	return true
 }
 
 func RiakTest() {
-	address := "bobthemundane.ddns.net:8087"
-	cluster := StartCluster(address)
+	hosts := []string{"45.55.0.44:8087", "107.170.224.168:8087", "45.55.1.236:8087"}
+	// hosts := []string{"45.55.0.44:8087"}
+	cluster := StartCluster(hosts)
 	defer StopCluster(cluster)
 	ReadData("../data/"+LOOPDATA_FILE, cluster)
 }
