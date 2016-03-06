@@ -450,7 +450,7 @@ riak_control.auth.mode = off
 ## 
 ## Acceptable values:
 ##   - an integer
-leveldb.maximum_memory.percent = 40
+leveldb.maximum_memory.percent = 70
 
 ## To enable Search set this 'on'.
 ## 
