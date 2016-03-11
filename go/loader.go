@@ -14,8 +14,8 @@ import (
 
 var LOOPDATA_FILE string = "loopdata_all.csv"
 var LOOPDATA_BUCKET string = "loopdata"
-var MAX_CONNECTIONS int = 3
-var SLEEP_TIMEOUT time.Duration = 120 * time.Second
+var MAX_CONNECTIONS int = 10
+var SLEEP_TIMEOUT time.Duration = 300 * time.Second
 var count int = 0
 
 func ReadData(file string, cluster *riak.Cluster) {
@@ -48,7 +48,7 @@ func ReadData(file string, cluster *riak.Cluster) {
 		go func(c int) {
 			result := Store(cluster, header, record)
 			if !result {
-				log.Println("ERROR", "sleeping", c + 2)
+				log.Println("ERROR", "sleeping", c+2)
 				time.Sleep(SLEEP_TIMEOUT)
 				result = Store(cluster, header, record)
 				if !result {
@@ -69,11 +69,11 @@ func ReadData(file string, cluster *riak.Cluster) {
 
 func StartCluster(hosts []string) *riak.Cluster {
 	var err error
-        
+
 	nodes := []*riak.Node{}
-        var node *riak.Node
-        for i := 0; i < len(hosts); i++ {
-        	nodeOpts := &riak.NodeOptions{
+	var node *riak.Node
+	for i := 0; i < len(hosts); i++ {
+		nodeOpts := &riak.NodeOptions{
 			RemoteAddress: hosts[i],
 		}
 
@@ -82,7 +82,7 @@ func StartCluster(hosts []string) *riak.Cluster {
 		}
 		nodes = append(nodes, node)
 	}
-        
+
 	opts := &riak.ClusterOptions{
 		Nodes: nodes,
 	}
@@ -177,7 +177,6 @@ func Store(cluster *riak.Cluster, header []string, data []string) bool {
 
 func RiakTest() {
 	hosts := []string{"45.55.0.44:8087", "107.170.224.168:8087", "45.55.1.236:8087"}
-	// hosts := []string{"45.55.0.44:8087"}
 	cluster := StartCluster(hosts)
 	defer StopCluster(cluster)
 	ReadData("../data/"+LOOPDATA_FILE, cluster)
