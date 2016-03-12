@@ -176,7 +176,11 @@ func Store(cluster *riak.Cluster, header []string, data []string) bool {
 }
 
 func RiakTest() {
-	hosts := []string{"45.55.0.44:8087", "107.170.224.168:8087", "45.55.1.236:8087"}
+	hosts := []string{
+		"192.241.197.154:8087",
+		"192.241.222.124:8087",
+		"198.199.109.100:8087",
+	}
 	cluster := StartCluster(hosts)
 	defer StopCluster(cluster)
 	ReadData("../data/"+LOOPDATA_FILE, cluster)

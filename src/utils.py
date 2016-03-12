@@ -57,5 +57,5 @@ class Bucket(object):
     def get(self, key):
         return self.bucket.get(key)
 
-    def search(self, search):
-        return self.bucket.search(search)
+    def search(self, search, params={}):
+        return self.bucket.search(search, **params)

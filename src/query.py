@@ -1,11 +1,11 @@
 from utils import Bucket
 
 FOSTER_NB_STATIONID = '1047'
-
+MAX_ROWS = 18000000
 
 def query1(client):
     loopdata_bucket = Bucket(client, 'loopdata')
-    results = loopdata_bucket.search('speed:[100 TO *]')
+    results = loopdata_bucket.search('speed:[100 TO *]', params=dict(rows=MAX_ROWS))
     return results['num_found']
 
 
@@ -24,13 +24,13 @@ def query2(client, daterange):
     loopdata_bucket = Bucket(client, 'loopdata')
     daterange = 'starttime:[{0}]'.format(daterange)
     query = '{0} AND ({1})'.format(daterange, detectorids)
-    results = loopdata_bucket.search(query)
+    results = loopdata_bucket.search(query, params=dict(rows=MAX_ROWS))
     
     """ from the results compute volume
     """
     volume = 0
     for row in results['docs']:
-        volume += row['volume']
+        volume += int(row['volume'])
     return volume
 
 
@@ -40,12 +40,14 @@ def query3(client, daterange):
     stations_bucket = Bucket(client, 'stations')
     results = stations_bucket.get(FOSTER_NB_STATIONID)
     length = results.data['length']
-
     
     """ find detector ids for Foster NB Station
     """
     detectors_bucket = Bucket(client, 'detectors')
-    results = detectors_bucket.search('stationid:{0}'.format(FOSTER_NB_STATIONID))
+    results = detectors_bucket.search(
+        'stationid:{0}'.format(FOSTER_NB_STATIONID),
+        params=dict(rows=MAX_ROWS)
+    )
     detectorids = " OR ".join(
         [ "detectorid:" + str(row['detectorid']) for row in results['docs'] ]
     )
@@ -56,14 +58,16 @@ def query3(client, daterange):
     loopdata_bucket = Bucket(client, 'loopdata')
     timerange = 'starttime:[{0}]'.format(daterange)
     query = '{0} AND ({1})'.format(timerange, detectorids)
-    results = loopdata_bucket.search(query)
+    results = loopdata_bucket.search(query, params=dict(rows=MAX_ROWS))
     if len(results['docs']) == 0:
         return None 
+    print "Results", len(results['docs'])
+
     """ from the results compute volume
     """
     speed = 0
     for row in results['docs']:
-        speed += row['speed']
+        speed += int(row['speed'])
     avg_speed = float(speed) / len(results['docs'])
     if avg_speed == 0:
         return None
@@ -83,12 +87,16 @@ def query4(client):
     return [ station['locationtext'] for station in stations ]
 
 
-def query5(client):
+def query5(client, length):
     STATION_ID = '1140'
     stations_bucket = Bucket(client, 'stations')
     result = stations_bucket.get(STATION_ID)
-    result.data['length'] = 2.3
+    before = result.data['length']
+    result.data['length'] = length
     stations_bucket.put(STATION_ID, result.data)
+    result = stations_bucket.get(STATION_ID)
+    after = result.data['length']
+    return before, after
 
 
 def test_indexes(client):
@@ -104,6 +112,8 @@ def test_keys(client):
     print Bucket(client, 'stations').get('1045').data
 
 
+
+
 def all_queries(client):
     print 'Query 1: Records with Speed >= 100:', query1(client)
     daterange = '2011-09-21T00:00:00Z TO 2011-09-21T23:59:59Z' 
@@ -114,11 +124,17 @@ def all_queries(client):
     print '\tAM Peak:', query3(client, ampeak)
     print '\tPM Peak:', query3(client, pmpeak)
     print 'Query 4: Route Finding:', query4(client)
-    print 'Query 5: Update station 1140 lengh'
-    query5(client)
+    before, after = query5(client, 2.3)
+    print 'Query 5: Update station 1140 length'
+    print '\tBefore:', before
+    print '\tAfter:', after
 
 
 def run(client):
-    test_indexes(client)
-    test_keys(client)
-    all_queries(client)
+    print 'Query 1: Records with Speed >= 100:', query1(client)
+    #daterange = '2011-09-21T00:00:00Z TO 2011-09-21T23:59:59Z' 
+    #print 'Query 2: Volume at Foster NB on Sept 21 2011:', query2(client, daterange)
+
+    #test_indexes(client)
+    #test_keys(client)
+    #all_queries(client)
