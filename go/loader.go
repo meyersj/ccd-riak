@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -104,17 +105,21 @@ func StopCluster(cluster *riak.Cluster) {
 	}
 }
 
-func parseTime(starttime string) string {
+func parseTime(starttime string) (string, string) {
 	split := strings.Split(starttime, " ")
 	if len(split) != 2 {
-		return ""
+		return "", ""
 	}
 	date := split[0]
-	split = strings.Split(split[1], "-")
-	if len(split) != 2 {
-		return ""
+	time_ := split[1]
+	timestamp := date + "T" + time_ + ":00"
+	parsed, err := time.Parse("2006-01-02T15:04:05Z07:00", timestamp)
+	if err != nil {
+		log.Println(err)
 	}
-	return date + "T" + split[0] + "Z"
+	local_epoch := strconv.FormatInt(parsed.Unix(), 10)
+	utc_timestamp := parsed.UTC().Format(time.RFC3339)
+	return local_epoch, utc_timestamp
 }
 
 func buildData(header []string, data []string) map[string]string {
@@ -137,11 +142,15 @@ func Store(cluster *riak.Cluster, header []string, data []string) bool {
 		return false
 	}
 
-	// build key
-	key := fields["detectorid"] + "-" + fields["starttime"]
-
 	// parse starttime to timestamp format required by Solr
-	fields["starttime"] = parseTime(fields["starttime"])
+	epoch, utc := parseTime(fields["starttime"])
+	fields["starttime"] = utc
+
+	// build key
+	key := fields["detectorid"]
+	key += "-" + epoch
+	key += "-" + fields["speed"]
+	key += "-" + fields["volume"]
 
 	// build json from fields
 	content, jsonerr := json.Marshal(fields)
@@ -181,6 +190,7 @@ func RiakTest() {
 		"192.241.222.124:8087",
 		"198.199.109.100:8087",
 	}
+	//hosts = []string{"127.0.0.1:8087"}
 	cluster := StartCluster(hosts)
 	defer StopCluster(cluster)
 	ReadData("../data/"+LOOPDATA_FILE, cluster)

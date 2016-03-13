@@ -17,7 +17,7 @@ def query2(client, daterange):
     detectorids = " OR ".join(
         [ "detectorid:" + str(row['detectorid']) for row in results['docs'] ]
     )
-    
+
     """ using the found detector ids construct a query to retrieve the records
         on the given date
     """
@@ -61,7 +61,6 @@ def query3(client, daterange):
     results = loopdata_bucket.search(query, params=dict(rows=MAX_ROWS))
     if len(results['docs']) == 0:
         return None 
-    print "Results", len(results['docs'])
 
     """ from the results compute volume
     """
@@ -112,14 +111,15 @@ def test_keys(client):
     print Bucket(client, 'stations').get('1045').data
 
 
-
-
 def all_queries(client):
     print 'Query 1: Records with Speed >= 100:', query1(client)
-    daterange = '2011-09-21T00:00:00Z TO 2011-09-21T23:59:59Z' 
+    # 2011-09-21 00:00:00 TO 2011-9-21 23:59:59 converted to UTC (-07:00)
+    daterange = '2011-09-21T00:07:00Z TO 2011-09-22T06:59:59Z'
     print 'Query 2: Volume at Foster NB on Sept 21 2011:', query2(client, daterange)
-    ampeak = '2011-09-22T07:00:00Z TO 2011-09-22T08:59:59Z' 
-    pmpeak = '2011-09-22T16:00:00Z TO 2011-09-22T17:59:59Z' 
+    # ampeak 2011-09-22 7:00:00 TO 8:59:59 converted to UTC (-07:00)
+    # pmpeak 2011-09-22 16:00:00 TO 17:59:59 converted to UTC (-07:00)
+    ampeak = '2011-09-22T14:00:00Z TO 2011-09-22T15:59:59Z'
+    pmpeak = '2011-09-22T23:00:00Z TO 2011-09-23T00:59:59Z'
     print 'Query 3: Peak Travel Times:'
     print '\tAM Peak:', query3(client, ampeak)
     print '\tPM Peak:', query3(client, pmpeak)
@@ -131,10 +131,6 @@ def all_queries(client):
 
 
 def run(client):
-    print 'Query 1: Records with Speed >= 100:', query1(client)
-    #daterange = '2011-09-21T00:00:00Z TO 2011-09-21T23:59:59Z' 
-    #print 'Query 2: Volume at Foster NB on Sept 21 2011:', query2(client, daterange)
-
-    #test_indexes(client)
-    #test_keys(client)
-    #all_queries(client)
+    test_indexes(client)
+    test_keys(client)
+    all_queries(client)
