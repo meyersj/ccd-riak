@@ -13,10 +13,9 @@ START=$PWD
 SCRIPT=$(readlink -f $0)
 SCRIPTPATH=`dirname $SCRIPT`
 ROOT=`readlink -f $SCRIPTPATH/../..`
-MAIN_NODE=104.236.129.96
-#ALL_NODES=( ${MAIN_NODE} ${RMS_NODE} 162.243.139.86 107.170.219.89 )
-ALL_NODES=( ${MAIN_NODE} 162.243.139.86 107.170.219.89 )
-
+MAIN_NODE=192.241.197.154
+#ALL_NODES=( ${MAIN_NODE} ${RMS_NODE} 192.241.225.39 )
+ALL_NODES=( ${MAIN_NODE} 192.241.222.124 198.199.109.100 )
 DATA=https://s3-us-west-2.amazonaws.com/jeffrey.alan.meyers.bucket/loopdata/loopdata
 
 
@@ -73,7 +72,7 @@ if [ "${CMD}" = "cluster" ]; then
     done
     for i in "${ALL_NODES[@]}"
     do
-        echo Node $i
+        echo Start Node $i
         user=root
         if [ "${i}" == "${RMS_NODE}" ]; then
             user=riak
@@ -86,11 +85,7 @@ if [ "${CMD}" = "cluster" ]; then
     ssh root@${MAIN_NODE} "riak-admin cluster plan"
     ssh root@${MAIN_NODE} "riak-admin cluster commit"
     ssh root@${MAIN_NODE} "riak-admin cluster status"
-    sleep 15
-    ssh root@${MAIN_NODE} "riak-admin cluster status"
-    sleep 15
-    ssh root@${MAIN_NODE} "riak-admin cluster status"
-    sleep 15
+    sleep 30
     ssh root@${MAIN_NODE} "riak-admin cluster status"
 fi
 
