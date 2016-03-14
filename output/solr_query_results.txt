@@ -1,0 +1,32 @@
+Query 1: Records with Speed > 100
+	6972
+
+9328.86195183 ms
+
+Query 2: Foster NB Volume on Sept 21 2011
+	59124
+
+11561.5689754 ms
+
+Query 3: Foster NB AM Peak Travel Time
+	169.305059836
+
+6083.74404907 ms
+
+Query 3: Foster NB PM Peak Travel Time
+	113.547685405
+
+5361.81807518 ms
+
+Query 4: Route Finding
+	Johnson Cr NB
+	Foster NB
+	Powell to I-205 NB
+	Division NB
+	Glisan to I-205 NB
+	Columbia to I-205 NB
+
+0.0116829872131 ms
+
+Query 5: Update station 1140 length
+	2.3

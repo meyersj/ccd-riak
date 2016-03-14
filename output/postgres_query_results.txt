@@ -1,0 +1,34 @@
+Query 1: Records with Speed > 100
+
+ speed > 100 
+-------------
+        6972
+
+30.899 ms
+
+
+Query 2: Foster NB Volume on Sept 21 2011
+
+ Foster NB Volume - 2011-09-21 
+-------------------------------
+                         59124
+
+196.751 ms
+
+
+Query 3: Foster NB AM Peak Travel Time
+
+ Foster NB AM Peak - Avg Travel 
+--------------------------------
+       169.54692420743229078000
+
+56.961 ms
+
+
+Query 3: Foster NB PM Peak Travel Time
+
+ Foster NB PM Peak - Avg Travel 
+--------------------------------
+       113.54768540547889341600
+
+62.127 ms
