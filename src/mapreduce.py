@@ -1,4 +1,4 @@
-from utils import connect, Bucket
+from utils import connect, Bucket, timer
 
 from riak import RiakMapReduce, RiakKeyFilter
 
@@ -9,18 +9,15 @@ import time
 FOSTER_NB_STATIONID = '1047'
 MAX_ROWS = 18000000
 
-
-TZ_OFFSET = -7
 HOUR = 60 * 60
 HOURS2 = HOUR * 2
 HOURS24 = HOUR * 24
 
 
-def timerange_convert(start, duration, tzoffset):
+def timerange_convert(start, duration):
     # compute start and end epoch based on start timestamp, duration in seconds
-    # and timezone offset from UTC in hours
     t = datetime.strptime(start, "%Y-%m-%d %H:%M:%S")
-    start = int(time.mktime(t.timetuple())) - (tzoffset * HOUR)
+    start = int(time.mktime(t.timetuple()))
     end = start + (duration - 1)
     return start, end
 
@@ -33,6 +30,7 @@ def lookup_detectors(stationid):
     return [ str(row['detectorid']) for row in results['docs'] ]
 
 
+@timer
 def query1(client):
     """
         Name: Speed Over 100
@@ -52,12 +50,13 @@ def query1(client):
     mr.map("function(record) { return [1]; }")
     mr.reduce_sum()
     
-    response = mr.run()
+    response = mr.run(timeout=HOURS24 * 1000)
     if response:
         return response[0]
     return None
 
 
+@timer
 def query2(client, start, duration=HOURS24):
     """
         Count number of loopdata records with speed over 100
@@ -65,7 +64,7 @@ def query2(client, start, duration=HOURS24):
 
     # lookup detector ids for Foster NB station
     detectorids = lookup_detectors(FOSTER_NB_STATIONID)
-    
+ 
     # build list of key filters for any key starting with detector id
     # for Foster NB station
     # starts_with 1361 OR starts_with 1362 OR starts_with 1363
@@ -83,10 +82,10 @@ def query2(client, start, duration=HOURS24):
     
     # key: <detector id>-<epoch>-<speed>-<volume>
     # build key filters for epoch being between start and end times
-    start, end = timerange_convert(start, duration, TZ_OFFSET)
+    start_epoch, end_epoch = timerange_convert(start, duration)
     timerange = RiakKeyFilter().tokenize("-", 2)
     timerange += RiakKeyFilter().string_to_int()
-    timerange += RiakKeyFilter().between(start, end)
+    timerange += RiakKeyFilter().between(start_epoch, end_epoch)
 
     mr = RiakMapReduce(client)
     mr.add_bucket('loopdata')
@@ -102,12 +101,13 @@ def query2(client, start, duration=HOURS24):
     """)
     mr.reduce_sum()
     
-    response = mr.run()
+    response = mr.run(timeout=HOURS24 * 1000)
     if response:
         return response[0]
     return None
 
 
+@timer
 def query3(client, start, duration=HOURS2):
     """
         Count number of loopdata records with speed over 100
@@ -137,10 +137,10 @@ def query3(client, start, duration=HOURS2):
     
     # key: <detector id>-<epoch>-<speed>-<volume>
     # build key filters for epoch being between start and end times
-    start, end = timerange_convert(start, duration, TZ_OFFSET)
+    start_epoch, end_epoch = timerange_convert(start, duration)
     timerange = RiakKeyFilter().tokenize("-", 2)
     timerange += RiakKeyFilter().string_to_int()
-    timerange += RiakKeyFilter().between(start, end)
+    timerange += RiakKeyFilter().between(start_epoch, end_epoch)
 
     mr = RiakMapReduce(client)
     mr.add_bucket('loopdata')
@@ -158,9 +158,9 @@ def query3(client, start, duration=HOURS2):
         return values;
       }
     """)
-   
+    
     # compute peak travel time from all mapped records
-    response = mr.run()
+    response = mr.run(timeout=HOURS24 * 1000)
     if not response:
         return None
     avg_speed = sum(response) / float(len(response))
@@ -168,18 +168,26 @@ def query3(client, start, duration=HOURS2):
     return peak_travel_time
 
 
+def run(client):
+    q1 = query1(client)
+    print 'Query 1: Records with Speed > 100\n\t', q1['ret']
+    print '\n', q1['elapsed'] * 1000, 'ms\n'
+    
+    start = "2011-09-21 00:00:00"
+    q2 = query2(client, start)
+    print 'Query 2: Foster NB Volume on Sept 21 2011\n\t', q2['ret']
+    print '\n', q2['elapsed'] * 1000, 'ms\n'
+    
+    ampeak = "2011-09-22 07:00:00"
+    pmpeak = "2011-09-22 16:00:00"
+    q3am = query3(client, ampeak)
+    print 'Query 3: Foster NB AM Peak Travel Time\n\t', q3am['ret']
+    print '\n', q3am['elapsed'] * 1000, 'ms\n'
+    q3pm = query3(client, pmpeak)
+    print 'Query 3: Foster NB PM Peak Travel Time\n\t', q3pm['ret']
+    print '\n', q3pm['elapsed'] * 1000, 'ms'
+
+
 if __name__ == "__main__":
     client = connect()
-
-    print "Query 1 - Count over 100:\n\tRecords:", query1(client)
-
-    date = "2011-09-15"
-    msg = "Query 2 - Volume on {0} at Foster NB Station\n\tVolume:".format(date)
-    timestamp = "{0} 00:00:00".format(date)
-    print msg, query2(client, timestamp)
-    
-    ampeak = "2011-09-15 00:07:00"
-    pmpeak = "2011-09-15 00:16:00"
-    print "Query 3 - Foster NB - Avg Travel Time"
-    print "\tAM Peak:", query3(client, ampeak)
-    print "\tPM Peak:", query3(client, pmpeak)
+    run(client)

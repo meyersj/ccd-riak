@@ -1,6 +1,7 @@
 import socket
 import fcntl
 import struct
+import time
 
 from riak import RiakClient
 from riak.riak_object import RiakObject
@@ -59,3 +60,12 @@ class Bucket(object):
 
     def search(self, search, params={}):
         return self.bucket.search(search, **params)
+
+
+def timer(func):
+    def wrap(*args):
+        start = time.time()
+        ret = func(*args)
+        end = time.time()
+        return dict(ret=ret, elapsed=end - start)
+    return wrap
